@@ -62,4 +62,40 @@ public class RestauranteController {
         restauranteService.save(restaurante);
         return new ResponseEntity<>(new Mensaje("Restaurante creado"), HttpStatus.OK);
     }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> update (@PathVariable("id") long id, @RequestBody RestauranteDto restauranteDto){
+        //Si no existe
+        if(!restauranteService.existById((id))){
+            return new ResponseEntity<>(new Mensaje("no existe "), HttpStatus.NOT_FOUND);
+        }
+        //Si existe
+        if(restauranteService.existByName(restauranteDto.getNombre())
+            && restauranteService.getByName(restauranteDto.getNombre()).isPresent()
+            && restauranteService.getByName(restauranteDto.getNombre()).get().getId() != id){
+            return new ResponseEntity<>(new Mensaje("el nombre ya existe"), HttpStatus.BAD_REQUEST);
+        }
+        //Si viene nombre vacio
+        if(StringUtils.isBlank(restauranteDto.getNombre())){
+            return new ResponseEntity<>(new Mensaje("El nombre es obligatorio"), HttpStatus.BAD_REQUEST);
+        }
+        //Actualizo y guardo
+        Restaurante restaurante = restauranteService.getOne(id).get();
+        restaurante.setNombre(restauranteDto.getNombre());
+        restaurante.setDescripcion(restaurante.getDescripcion());
+
+        restauranteService.save(restaurante);
+        return new ResponseEntity<>(new Mensaje("restaurante actualizado"), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> delete (@PathVariable("id") long id){
+        //Si no existe
+        if(!restauranteService.existById((id))){
+            return new ResponseEntity<>(new Mensaje("no existe "), HttpStatus.NOT_FOUND);
+        }
+        //Delete
+        restauranteService.delete(id);
+        return new ResponseEntity<>(new Mensaje("restaurante borrado"), HttpStatus.OK);
+    }
 }

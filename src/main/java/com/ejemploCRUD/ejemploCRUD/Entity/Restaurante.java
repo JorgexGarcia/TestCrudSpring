@@ -1,9 +1,10 @@
 package com.ejemploCRUD.ejemploCRUD.Entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.Set;
 
 @Entity
 @Table(name = "restaurante")
@@ -21,6 +22,18 @@ public class Restaurante {
 
     @Column(name = "descripcion")
     private String descripcion;
+
+    @ManyToOne(cascade = CascadeType.MERGE)
+    @JoinColumn(name = "categoria_id")
+    private Categoria categoria;
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "restaurante")
+    @JoinColumn(name = "categoria_id")
+    private Set<Imagen> imagenes;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "direccion_id")
+    private Direccion direccion;
 
     public Restaurante(String nombre, String descripcion) {
         this.nombre = nombre;
