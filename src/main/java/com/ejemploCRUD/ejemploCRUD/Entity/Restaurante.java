@@ -23,12 +23,11 @@ public class Restaurante {
     @Column(name = "descripcion")
     private String descripcion;
 
-    @ManyToOne(cascade = CascadeType.MERGE)
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "restaurante")
-    @JoinColumn(name = "categoria_id")
     private Set<Imagen> imagenes;
 
     @OneToOne(cascade = CascadeType.ALL)

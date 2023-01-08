@@ -22,7 +22,7 @@ public class Imagen {
     private String descripcion;
 
     @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "restaurante_id")
+    @JoinColumn(name = "restaurante_id", nullable = false)
     private Restaurante restaurante;
 
     public Imagen(String nombre) {

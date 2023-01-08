@@ -1,8 +1,13 @@
 package com.ejemploCRUD.ejemploCRUD.controllers;
 
+import com.ejemploCRUD.ejemploCRUD.Entity.Categoria;
+import com.ejemploCRUD.ejemploCRUD.Entity.Direccion;
+import com.ejemploCRUD.ejemploCRUD.Entity.Imagen;
 import com.ejemploCRUD.ejemploCRUD.Entity.Restaurante;
 import com.ejemploCRUD.ejemploCRUD.dto.Mensaje;
 import com.ejemploCRUD.ejemploCRUD.dto.RestauranteDto;
+import com.ejemploCRUD.ejemploCRUD.services.CategoriaService;
+import com.ejemploCRUD.ejemploCRUD.services.DireccionService;
 import com.ejemploCRUD.ejemploCRUD.services.RestauranteService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/restaurante")
@@ -19,6 +26,12 @@ public class RestauranteController {
 
     @Autowired
     RestauranteService restauranteService;
+
+    @Autowired
+    CategoriaService categoriaService;
+
+    @Autowired
+    DireccionService direccionService;
 
     @GetMapping("/lista")
     public ResponseEntity<List<Restaurante>> List() {
@@ -58,7 +71,45 @@ public class RestauranteController {
         if(restauranteService.existByName(restauranteDto.getNombre())){
             return new ResponseEntity<>(new Mensaje("El nombre ya existe"), HttpStatus.BAD_REQUEST);
         }
+
+        Categoria categoria;
         Restaurante restaurante = new Restaurante(restauranteDto.getNombre(), restauranteDto.getDescripcion());
+
+        //Categoria
+        if(categoriaService.getByCategoria(restauranteDto.getCategoria().getCategoria()).isPresent()){
+            categoria = categoriaService.getByCategoria(restauranteDto.getCategoria().getCategoria()).get();
+            restaurante.setCategoria(categoria);
+        }else{
+            //No esta vacio
+            if(StringUtils.isBlank(restauranteDto.getCategoria().getCategoria()))
+                return new ResponseEntity<>(new Mensaje("La categoria es obligatoria"), HttpStatus.BAD_REQUEST);
+            Categoria categoriaNew = restauranteDto.getCategoria();
+            restaurante.setCategoria(categoriaNew);
+            if(categoriaNew.getRestaurantes()!= null){
+                categoriaNew.getRestaurantes().add(restaurante);
+            }else{
+                Set<Restaurante> restaurantes = new HashSet<Restaurante>();
+                restaurantes.add(restaurante);
+                categoriaNew.setRestaurantes(restaurantes);
+            }
+        }
+
+        //Imagenes
+        Set<Imagen> imagenes = restauranteDto.getImagenes();
+        for(Imagen imagen: imagenes){
+            imagen.setRestaurante(restaurante);
+        }
+        restaurante.setImagenes(imagenes);
+
+        //Direccion
+        if(direccionService.existByCalle(restauranteDto.getDireccion().getCalle())){
+            return new ResponseEntity<>(new Mensaje("La dirección ya existe"), HttpStatus.BAD_REQUEST);
+        }else {
+            Direccion direccion = restauranteDto.getDireccion();
+            restaurante.setDireccion(direccion);
+            direccion.setRestaurante(restaurante);
+        }
+
         restauranteService.save(restaurante);
         return new ResponseEntity<>(new Mensaje("Restaurante creado"), HttpStatus.OK);
     }
@@ -79,10 +130,18 @@ public class RestauranteController {
         if(StringUtils.isBlank(restauranteDto.getNombre())){
             return new ResponseEntity<>(new Mensaje("El nombre es obligatorio"), HttpStatus.BAD_REQUEST);
         }
+
+        //Comprobación dirección
+        if(direccionService.existByCalle(restauranteDto.getDireccion().getCalle()))
+            return new ResponseEntity<>(new Mensaje("La dirección ya existe"), HttpStatus.BAD_REQUEST);
+
         //Actualizo y guardo
         Restaurante restaurante = restauranteService.getOne(id).get();
         restaurante.setNombre(restauranteDto.getNombre());
         restaurante.setDescripcion(restaurante.getDescripcion());
+        restaurante.setCategoria(restauranteDto.getCategoria());
+        restaurante.setDireccion(restauranteDto.getDireccion());
+        restaurante.setImagenes(restauranteDto.getImagenes());
 
         restauranteService.save(restaurante);
         return new ResponseEntity<>(new Mensaje("restaurante actualizado"), HttpStatus.OK);

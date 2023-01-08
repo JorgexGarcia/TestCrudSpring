@@ -22,7 +22,6 @@ public class Categoria {
 
     //Fech es para que saque solo cuando se pide
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "categoria")
-    @JoinColumn(name = "restaurante_id")
     private Set<Restaurante> restaurantes;
 
     public Categoria(String categoria) {
